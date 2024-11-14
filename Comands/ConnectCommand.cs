@@ -1,12 +1,12 @@
 public class ConnectCommand : ICommand
 {
-    private readonly string _absolutePath;
+    private readonly string _pathOrRoot; // Может быть абсолютным путем или новым корнем (например, D:)
     private readonly string _mode;
     private readonly IFileSystem _fileSystem;
 
-    public ConnectCommand(string absolutePath, string mode, IFileSystem fileSystem)
+    public ConnectCommand(string pathOrRoot, string mode, IFileSystem fileSystem)
     {
-        _absolutePath = absolutePath;
+        _pathOrRoot = pathOrRoot;
         _mode = mode.ToLower();
         _fileSystem = fileSystem;
     }
@@ -18,21 +18,29 @@ public class ConnectCommand : ICommand
             if (_mode != "local")
                 throw new ArgumentException($"Only 'local' mode can be used.");
 
-            // Проверяем существование пути
-            if (!Directory.Exists(_absolutePath))
+            // Проверяем, является ли входная строка диском (например, "D:")
+            if (_pathOrRoot.Length == 2 && _pathOrRoot.EndsWith(":"))
             {
-                Console.WriteLine($"Error: Directory not found: {_absolutePath}");
+                _fileSystem.ChangeRoot(_pathOrRoot);
+                Console.WriteLine($"Switched to {_pathOrRoot}");
                 return;
             }
 
-            // Разрешаем коллизии, если есть несколько подходящих путей
+            // Проверяем существование пути
+            if (!Directory.Exists(_pathOrRoot))
+            {
+                Console.WriteLine($"Error: Directory not found: {_pathOrRoot}");
+                return;
+            }
+
+            // Разрешаем коллизии
             var matchingDirectories = Directory.GetDirectories(
-                Path.GetDirectoryName(_absolutePath) ?? string.Empty, 
-                Path.GetFileName(_absolutePath));
+                Path.GetDirectoryName(_pathOrRoot) ?? string.Empty, 
+                Path.GetFileName(_pathOrRoot));
             
             var resolvedPath = matchingDirectories.Length > 1
-                ? CollisionChecker.CollisionCheck(matchingDirectories, Path.GetFileName(_absolutePath))
-                : _absolutePath;
+                ? CollisionChecker.CollisionCheck(matchingDirectories, Path.GetFileName(_pathOrRoot))
+                : _pathOrRoot;
 
             _fileSystem.Connect(resolvedPath);
             Console.WriteLine($"Connected to {resolvedPath}");
