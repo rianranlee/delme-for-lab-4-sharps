@@ -15,25 +15,11 @@ public class FileMoveCommand : ICommand
     {
         try
         {
-            // Проверяем существование исходного файла
-            if (!_fileSystem.FileExists(_sourcePath))
-            {
-                Console.WriteLine($"Error: Source file not found: {_sourcePath}");
-                return;
-            }
+            var files = Directory.GetFiles(_fileSystem.CurrentDirectory);
+            var resolvedSourcePath = CollisionChecker.CollisionCheck(files, Path.GetFileName(_sourcePath));
 
-            // Проверяем существование папки назначения
-            var destinationFolder = Path.GetDirectoryName(_destinationPath);
-            if (destinationFolder == null || !_fileSystem.DirectoryExists(destinationFolder))
-            {
-                Console.WriteLine($"Error: Destination folder not found: {destinationFolder}");
-                return;
-            }
-
-            // Выполняем перемещение файла
-            _fileSystem.MoveFile(_sourcePath, _destinationPath);
-
-            Console.WriteLine($"File moved successfully from {_sourcePath} to {_destinationPath}");
+            _fileSystem.MoveFile(resolvedSourcePath, _destinationPath);
+            Console.WriteLine($"File moved to {_destinationPath}");
         }
         catch (Exception ex)
         {

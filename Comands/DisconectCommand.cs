@@ -9,7 +9,14 @@ public class DisconnectCommand : ICommand
 
     public void Execute()
     {
-        _fileSystem.Disconnect();
-        Console.WriteLine("Disconnected from the file system.");
+        try
+        {
+            _fileSystem.Disconnect();
+            Console.WriteLine("Disconnected from the file system.");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error: {ex.Message}");
+        }
     }
 }

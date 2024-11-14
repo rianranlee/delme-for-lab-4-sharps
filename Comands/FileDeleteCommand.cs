@@ -13,18 +13,11 @@ public class FileDeleteCommand : ICommand
     {
         try
         {
-            string fullPath = _fileSystem.GetFullPath(_filePath);
+            var files = Directory.GetFiles(_fileSystem.CurrentDirectory);
+            var resolvedFile = CollisionChecker.CollisionCheck(files, Path.GetFileName(_filePath));
 
-            // Проверяем, существует ли файл
-            if (!File.Exists(fullPath))
-            {
-                Console.WriteLine($"File not found: {fullPath}");
-                return;
-            }
-
-            // Удаляем файл
-            File.Delete(fullPath);
-            Console.WriteLine($"File successfully deleted: {fullPath}");
+            _fileSystem.DeleteFile(resolvedFile);
+            Console.WriteLine($"File deleted: {resolvedFile}");
         }
         catch (Exception ex)
         {

@@ -13,26 +13,17 @@ public class FileShowCommand : ICommand
 
     public void Execute()
     {
-        if (_mode != "console")
-            throw new ArgumentException($"Only 'console' mode can be used.");
         try
         {
-            // Проверяем существование файла
-            if (!_fileSystem.FileExists(_filePath))
-            {
-                Console.WriteLine($"Error: File not found: {_filePath}");
-                return;
-            }
+            var files = Directory.GetFiles(_fileSystem.CurrentDirectory);
+            var resolvedFile = CollisionChecker.CollisionCheck(files, Path.GetFileName(_filePath));
 
-            // Получаем содержимое файла
-            var fileContent = _fileSystem.ReadFile(_filePath);
-
-            // Выводим содержимое файла
+            var fileContent = _fileSystem.ReadFile(resolvedFile);
             WriteFileToConsole(fileContent);
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Error reading file {_filePath}: {ex.Message}");
+            Console.WriteLine($"Error: {ex.Message}");
         }
     }
 

@@ -15,29 +15,20 @@ public class FileRenameCommand : ICommand
     {
         try
         {
-            string fullPath = _fileSystem.GetFullPath(_filePath);
+            var files = Directory.GetFiles(_fileSystem.CurrentDirectory);
+            var resolvedFile = CollisionChecker.CollisionCheck(files, Path.GetFileName(_filePath));
 
-            // Проверяем, существует ли файл
-            if (!File.Exists(fullPath))
-            {
-                Console.WriteLine($"File not found: {fullPath}");
-                return;
-            }
-
-            // Определяем новый путь
-            string directory = Path.GetDirectoryName(fullPath) ?? throw new InvalidOperationException("Directory not found");
+            string directory = Path.GetDirectoryName(resolvedFile);
             string newFilePath = Path.Combine(directory, _newName);
 
-            // Проверяем, существует ли файл с новым именем
             if (File.Exists(newFilePath))
             {
-                Console.WriteLine($"A file with the name '{_newName}' already exists in the directory.");
+                Console.WriteLine($"Error: A file with the name '{_newName}' already exists.");
                 return;
             }
 
-            // Переименовываем файл
-            File.Move(fullPath, newFilePath);
-            Console.WriteLine($"File renamed successfully: {fullPath} -> {newFilePath}");
+            _fileSystem.RenameFile(resolvedFile, newFilePath);
+            Console.WriteLine($"File renamed successfully to {newFilePath}");
         }
         catch (Exception ex)
         {

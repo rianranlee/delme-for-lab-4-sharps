@@ -1,57 +1,69 @@
- public class TreeListCommand : ICommand
+public class TreeListCommand : ICommand
 {
-        private readonly IFileSystem _fileSystem;
-        private readonly int _depth;
-        private readonly string _folderSymbol;
-        private readonly string _fileSymbol;
-        private readonly string _indentationSymbol;
+    private readonly IFileSystem _fileSystem;
+    private readonly int _depth;
+    private readonly string _folderSymbol;
+    private readonly string _fileSymbol;
+    private readonly string _indentationSymbol;
 
-        // Конструктор с параметрами для глубины, символов для файлов и папок, и символа отступа
-        public TreeListCommand(IFileSystem fileSystem, int depth = 1, 
-                               string folderSymbol = "📁", string fileSymbol = "📄", string indentationSymbol = "--")
+    public TreeListCommand(IFileSystem fileSystem, int depth = 1, 
+                           string folderSymbol = "📁", string fileSymbol = "📄", 
+                           string indentationSymbol = "--")
+    {
+        _fileSystem = fileSystem;
+        _depth = depth;
+        _folderSymbol = folderSymbol;
+        _fileSymbol = fileSymbol;
+        _indentationSymbol = indentationSymbol;
+    }
+
+    public void Execute()
+    {
+        try
         {
-            _fileSystem = fileSystem;
-            _depth = depth;  // Устанавливаем глубину, по умолчанию 1
-            _folderSymbol = folderSymbol;
-            _fileSymbol = fileSymbol;
-            _indentationSymbol = indentationSymbol;
+            var currentDirectory = _fileSystem.CurrentDirectory;
+
+            // Проверяем коллизии, если путь неоднозначен
+            var matchingDirectories = Directory.GetDirectories(
+                Path.GetDirectoryName(currentDirectory) ?? string.Empty, 
+                Path.GetFileName(currentDirectory));
+            
+            var resolvedPath = matchingDirectories.Length > 1
+                ? CollisionChecker.CollisionCheck(matchingDirectories, Path.GetFileName(currentDirectory))
+                : currentDirectory;
+
+            ListDirectoryTree(resolvedPath, 0);
         }
-
-        public void Execute()
+        catch (Exception ex)
         {
-            try
-            {
-                ListDirectoryTree(_fileSystem.CurrentDirectory, 0);  // Начинаем с корня (глубина 0)
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"Error: {ex.Message}");
-            }
+            Console.WriteLine($"Error: {ex.Message}");
         }
+    }
 
-        // Метод для рекурсивного вывода содержимого каталога
-        private void ListDirectoryTree(string path, int currentDepth)
+    private void ListDirectoryTree(string path, int currentDepth)
+    {
+        if (currentDepth >= _depth) return;
+
+        try
         {
-            // Если текущая глубина больше максимальной глубины, не продолжаем обход
-            if (currentDepth >= _depth) return;
-
-            // Получаем содержимое каталога
             var directories = Directory.GetDirectories(path);
             var files = Directory.GetFiles(path);
 
-            // Отображаем текущий каталог
             Console.WriteLine($"{new string(_indentationSymbol[0], currentDepth * 2)}{_folderSymbol} {Path.GetFileName(path)}\\");
 
-            // Рекурсивно выводим содержимое подкаталогов, увеличиваем глубину
             foreach (var directory in directories)
             {
-                ListDirectoryTree(directory, currentDepth + 1);  // Увеличиваем глубину при переходе в подкаталог
+                ListDirectoryTree(directory, currentDepth + 1);
             }
 
-            // Выводим файлы
             foreach (var file in files)
             {
                 Console.WriteLine($"{new string(_indentationSymbol[0], (currentDepth + 1) * 2)}{_fileSymbol} {Path.GetFileName(file)}");
             }
         }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"{new string(_indentationSymbol[0], currentDepth * 2)}Error reading directory {path}: {ex.Message}");
+        }
+    }
 }

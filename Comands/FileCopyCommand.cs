@@ -15,23 +15,11 @@ public class FileCopyCommand : ICommand
     {
         try
         {
-            // Получаем полный путь для исходного файла
-            string sourceFullPath = _fileSystem.GetFullPath(_sourcePath);
-            if (!File.Exists(sourceFullPath))
-                throw new FileNotFoundException("Source file not found.", sourceFullPath);
+            var files = Directory.GetFiles(_fileSystem.CurrentDirectory);
+            var resolvedSourcePath = CollisionChecker.CollisionCheck(files, Path.GetFileName(_sourcePath));
 
-            // Получаем полный путь для директории назначения
-            string destinationFullPath = _fileSystem.GetFullPath(_destinationPath);
-            string destinationDirectory = Path.GetDirectoryName(destinationFullPath)
-                                          ?? throw new DirectoryNotFoundException("Destination directory is invalid.");
-
-            if (!Directory.Exists(destinationDirectory))
-                throw new DirectoryNotFoundException("Destination directory does not exist.");
-
-            // Копируем файл
-            File.Copy(sourceFullPath, destinationFullPath, overwrite: true);
-
-            Console.WriteLine($"File successfully copied to: {destinationFullPath}");
+            _fileSystem.CopyFile(resolvedSourcePath, _destinationPath);
+            Console.WriteLine($"File copied to {_destinationPath}");
         }
         catch (Exception ex)
         {

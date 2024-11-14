@@ -13,10 +13,13 @@ public class TreeGotoCommand : ICommand
     {
         try
         {
-            _fileSystem.GoToDirectory(_path);
-            Console.WriteLine($"Changed directory to {_path}");
+            var directories = Directory.GetDirectories(_fileSystem.CurrentDirectory);
+            var resolvedPath = CollisionChecker.CollisionCheck(directories, Path.GetFileName(_path));
+
+            _fileSystem.GoToDirectory(resolvedPath);
+            Console.WriteLine($"Changed directory to {resolvedPath}");
         }
-        catch (DirectoryNotFoundException exception)
+        catch (Exception exception)
         {
             Console.WriteLine($"Error: {exception.Message}");
         }
